@@ -10,13 +10,10 @@ import hello.core.order.OrderService;
 import hello.core.order.OrderServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
-//@Configuration
+@Configuration
 public class AppConfig {
-
-    // @Bean memberService -> new MemoryMemberRepository()
-    // @Bean orderService ->  new MemoryMemberRepository()
-
 
     @Bean
     public MemberService memberService() {
@@ -24,6 +21,7 @@ public class AppConfig {
     }
 
     @Bean
+    @Primary
     public MemberRepository memberRepository() {
         return new MemoryMemberRepository();
     }
@@ -35,6 +33,7 @@ public class AppConfig {
     }
 
     @Bean
+    @Primary
     public DiscountPolicy discountPolicy() {
 //        return new FixDiscountPolicy();
         return new RateDiscountPolicy();
