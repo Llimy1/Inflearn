@@ -1,7 +1,7 @@
 package jpabook.jpashop.service;
 
 import jpabook.jpashop.domain.Member;
-import jpabook.jpashop.repository.MemberRepository;
+import jpabook.jpashop.repository.MemberRepositoryOld;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.Fail.fail;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 
 
 @RunWith(SpringRunner.class)
@@ -22,7 +21,7 @@ public class MemberServiceTest {
     @Autowired
     MemberService memberService;
     @Autowired
-    MemberRepository memberRepository;
+    MemberRepositoryOld memberRepositoryOld;
 
 
     @Test
@@ -35,10 +34,10 @@ public class MemberServiceTest {
         Long savedId = memberService.join(member);
 
         //then
-        assertEquals(member, memberRepository.findOne(savedId));
+        assertEquals(member, memberRepositoryOld.findOne(savedId));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected=IllegalStateException.class)
     public void 중복_회원_예외() {
         //given
         Member member1 = new Member();
