@@ -1,4 +1,4 @@
-package study.datajpa.controller.entity;
+package study.datajpa.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +19,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString(of = {"id", "name"})
-public class Team {
+public class Team extends BaseEntity {
 
     @Id
     @GeneratedValue

@@ -1,9 +1,9 @@
-package study.datajpa.controller.repository;
+package study.datajpa.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
-import study.datajpa.controller.entity.Team;
+import study.datajpa.entity.Team;
 
 import java.util.List;
 import java.util.Optional;

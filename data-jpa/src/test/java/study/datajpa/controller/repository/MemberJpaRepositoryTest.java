@@ -4,7 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import study.datajpa.controller.entity.Member;
+import study.datajpa.entity.Member;
+import study.datajpa.repository.MemberJpaRepository;
 
 import java.util.List;
 
@@ -15,7 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional
 class MemberJpaRepositoryTest {
 
-    @Autowired MemberJpaRepository memberJpaRepository;
+    @Autowired
+    MemberJpaRepository memberJpaRepository;
 
     @Test
     public void testMember() {
@@ -74,5 +76,44 @@ class MemberJpaRepositoryTest {
 
         long deletedCount = memberJpaRepository.count();
         assertThat(deletedCount).isEqualTo(0);
+    }
+
+    @Test
+    void paging() {
+        // given
+        memberJpaRepository.save(new Member("member1", 10));
+        memberJpaRepository.save(new Member("member2", 10));
+        memberJpaRepository.save(new Member("member3", 10));
+        memberJpaRepository.save(new Member("member4", 10));
+        memberJpaRepository.save(new Member("member5", 10));
+
+        int age = 10;
+        int offset = 0;
+        int limit = 3;
+
+        //when
+        List<Member> members = memberJpaRepository.findByPage(age, offset, limit);
+        long totalCount = memberJpaRepository.totalCount(age);
+
+        //then
+        assertThat(members.size()).isEqualTo(3);
+        assertThat(totalCount).isEqualTo(5);
+
+    }
+
+    @Test
+    void bulkUpdate() {
+        //given
+        memberJpaRepository.save(new Member("member1", 10));
+        memberJpaRepository.save(new Member("member1", 19));
+        memberJpaRepository.save(new Member("member1", 20));
+        memberJpaRepository.save(new Member("member1", 21));
+        memberJpaRepository.save(new Member("member1", 40));
+
+        //when
+        int resultCount = memberJpaRepository.bulkAgePlus(20);
+
+        //then
+        assertThat(resultCount).isEqualTo(3);
     }
 }

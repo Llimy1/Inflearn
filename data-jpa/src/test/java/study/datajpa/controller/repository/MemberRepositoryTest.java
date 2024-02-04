@@ -1,14 +1,20 @@
 package study.datajpa.controller.repository;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
-import study.datajpa.controller.entity.Member;
-import study.datajpa.controller.entity.Team;
+import study.datajpa.entity.Member;
+import study.datajpa.entity.Team;
 import study.datajpa.dto.MemberDto;
+import study.datajpa.repository.MemberRepository;
+import study.datajpa.repository.TeamRepository;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +26,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional
 class MemberRepositoryTest {
 
-    @Autowired MemberRepository memberRepository;
-    @Autowired TeamRepository teamRepository;
+    @Autowired
+    MemberRepository memberRepository;
+    @Autowired
+    TeamRepository teamRepository;
+    @Autowired
+    EntityManager em;
 
     @Test
     public void testMember() {
@@ -151,5 +161,149 @@ class MemberRepositoryTest {
         System.out.println("members = " + members);
         System.out.println("member = " + member);
         System.out.println("optionalMember = " + optionalMember);
+    }
+
+    @Test
+    void paging() {
+        // given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        int age = 10;
+        PageRequest pageRequest =
+                PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));
+
+        //when
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        Page<MemberDto> map = page.map(member -> new MemberDto(member.getId(), member.getUsername(), null));
+
+
+        //then
+        List<Member> content = page.getContent();
+
+        assertThat(content.size()).isEqualTo(3);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getNumber()).isEqualTo(0);
+        assertThat(page.getTotalPages()).isEqualTo(2);
+        assertThat(page.isFirst()).isTrue();
+        assertThat(page.hasNext()).isTrue();
+
+    }
+
+    @Test
+    void paging_slice() {
+        // given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        int age = 10;
+        PageRequest pageRequest =
+                PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "username"));
+
+        //when
+        Slice<Member> page = memberRepository.findSliceByAge(age, pageRequest);
+
+        //then
+        List<Member> content = page.getContent();
+
+        assertThat(content.size()).isEqualTo(3);
+//        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getNumber()).isEqualTo(0);
+//        assertThat(page.getTotalPages()).isEqualTo(2);
+        assertThat(page.isFirst()).isTrue();
+        assertThat(page.hasNext()).isTrue();
+
+    }
+
+    @Test
+    void bulkModifying() {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member1", 19));
+        memberRepository.save(new Member("member1", 20));
+        memberRepository.save(new Member("member1", 21));
+        memberRepository.save(new Member("member1", 40));
+
+        //when
+        int resultCount = memberRepository.bulkAgePlus(20);
+
+        //then
+        assertThat(resultCount).isEqualTo(3);
+    }
+
+    @Test
+    void findMemberLazy() {
+        //given
+        // member1 -> teamA
+        // member2 -> teamB
+
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 10, teamB);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+
+        //when N + 1
+        //select Member 1
+        List<Member> members = memberRepository.findAll();
+
+        //then
+        for (Member member : members) {
+            System.out.println("member = " + member);
+            System.out.println("member.team = " + member.getTeam().getName());
+
+        }
+    }
+
+    @Test
+    void queryHint() {
+        //given
+        Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        //when
+        Member findMember = memberRepository.findReadOnlyByUsername("member1");
+        findMember.setUsername("member2");
+
+        em.flush();
+
+        //then
+    }
+
+    @Test
+    void lock() {
+        //given
+        Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        //when
+        List<Member> result = memberRepository.findLockByUsername("member1");
+    }
+
+    @Test
+    void callCustom() {
+        //given
+        List<Member> memberCustom = memberRepository.findMemberCustom();
+
+        //when
+        //then
     }
 }
